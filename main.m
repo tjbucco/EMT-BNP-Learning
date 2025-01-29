@@ -1,4 +1,9 @@
-% srng = rng;
+loadseed_flag = 1;
+if loadseed_flag
+    load(strcat("data\srng.mat"));
+else
+   srng = rng;
+end
 rng(srng);
 
 %close all
@@ -36,8 +41,6 @@ al0_data = [alpha_IG_D; alpha_IG_D];% object extent covariance matrix parameters
 bl0_data = Elsq_data.*(al0_data - 1); % object extent covariance matrix parameters
 var_D0 = Elsq_data.^2./((al0_data -1).^2 .* (al0_data - 2));
 
-
-
 %mean number of measurements stuff
 ElambdaM_data = 6; % prior expectation of number of measurements, increase for MORE variance
 aM0_data = 4; % number of measurements parameters, increase for LESS variance
@@ -53,25 +56,25 @@ maxlamb = 35;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %class structure
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% alphadp = 0.5; %alphadp_data;%0.5; % DP concentration parameter, set high for no clustering
-% 
-% %driving noise covariance stuff
-% Essq = Essq_data .* 1; %[100; 10];
-% Sigmav0 = diag(Essq([1, 1, 2, 2])); % prior expectation of driving noise covariance matrix, increase for MORE variance
-% av0 = av0_data ./ av0_data * 2; %[alpha_IG_Sig; alpha_IG_Sig]; % driving noise covariance matrix parameters, increase for LESS variance
-% bv0 = Essq.*(av0 - 1); % driving noise covariance matrix parameters
-% 
-% %object extent stuff
-% Elsq = Elsq_data .* 1; %[1000;500];
-% D0 = diag(Elsq); % prior expectation of extent matrix, increase for MORE variance
-% al0 = al0_data ./ al0_data * 2; %[alpha_IG_D; alpha_IG_D];% object extent covariance matrix parameters, increase for LESS variance
-% bl0 = Elsq.*(al0 - 1); % object extent covariance matrix parameters
-% 
-% %mean number of measurements stuff
-% ElambdaM = ElambdaM_data .* 1; % 30; % prior expectation of number of measurements, increase for MORE variance
-% aM0 = aM0_data; %2; % number of measurements parameters, increase for LESS variance
-% bM0 = aM0/ElambdaM; % number of measurements parameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+alphadp = 0.5; %alphadp_data;%0.5; % DP concentration parameter, set high for no clustering
+
+%driving noise covariance stuff
+Essq = Essq_data .* 1; %[100; 10];
+Sigmav0 = diag(Essq([1, 1, 2, 2])); % prior expectation of driving noise covariance matrix, increase for MORE variance
+av0 = av0_data;%./av0_data*2; %[alpha_IG_Sig; alpha_IG_Sig]; % driving noise covariance matrix parameters, increase for LESS variance
+bv0 = Essq.*(av0 - 1); % driving noise covariance matrix parameters
+
+%object extent stuff
+Elsq = Elsq_data .* 1; %[1000;500];
+D0 = diag(Elsq); % prior expectation of extent matrix, increase for MORE variance
+al0 = al0_data;%./al0_data*2; %[alpha_IG_D; alpha_IG_D];% object extent covariance matrix parameters, increase for LESS variance
+bl0 = Elsq.*(al0 - 1); % object extent covariance matrix parameters
+
+%mean number of measurements stuff
+ElambdaM = ElambdaM_data .* 1; % 30; % prior expectation of number of measurements, increase for MORE variance
+aM0 = aM0_data; %2; % number of measurements parameters, increase for LESS variance
+bM0 = aM0/ElambdaM; % number of measurements parameters
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %motion model
@@ -80,16 +83,14 @@ deltaT = 1;
 F = [1, 0, deltaT*1, 0; 0, 1, 0, deltaT*1; 0, 0, 1, 0; 0, 0 , 0, 1]; % state evolution matrix
 
 %ROI
-ROI_x = 2000;
-ROI_y = 2000;
+ROI_x = 4000;
+ROI_y = 4000;
 
 %initial object states
 init_radius = 100;
 init_velo = 10;
 Ex1 = [0; 0; 0; 0]; % mean for the initial object state (location and velocity)
 Sigmax1 = diag([init_radius^2, init_radius^2, init_velo^2, init_velo^2]); % object generation covariance matrix
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %measurement model
@@ -99,8 +100,10 @@ H = [eye(2) zeros(2,2)];
 clutter_density = 5*10^-3; % clutter density
 lambdaclutter = 1; % clutter density
 
+clutter_gauss_approx_cov = [1/12*(2*ROI_x)^2, 0; 0, 1/12*(2*ROI_y)^2];
 
-hyperparams = struct("alphadp_data", alphadp_data, "Sigmav0_data", Sigmav0_data, "av0_data", av0_data, "bv0_data", bv0_data, "D0_data", D0_data, "al0_data", al0_data, "bl0_data", bl0_data, "ElambdaM_data", ElambdaM_data, "aM0_data", aM0_data, "bM0_data", bM0_data, "alphadp", alphadp_data, "Sigmav0", Sigmav0_data, "av0", av0_data ./ av0_data * 2, "bv0", Essq_data.*(av0_data ./ av0_data * 2 - 1), "D0", D0_data, "al0", al0_data ./ al0_data * 2, "bl0", Elsq_data.*(al0_data ./ al0_data * 2 - 1), "ElambdaM", ElambdaM_data, "aM0", aM0_data, "bM0", bM0_data, "F", F, "Ex1", Ex1, "Sigmax1", Sigmax1, "H", H, "clutter_density", clutter_density, 'lambdaclutter', lambdaclutter,"radius", init_radius, "velo", init_velo, "ROI_x", ROI_x, "ROI_y", ROI_y, "Essq_data", Essq_data, "Elsq_data", Elsq_data);
+
+hyperparams = struct("alphadp", alphadp, "Sigmav0", Sigmav0, "av0", av0, "bv0", bv0, "D0", D0, "al0", al0, "bl0", bl0, "ElambdaM", ElambdaM, "aM0", aM0, "bM0", bM0, "alphadp_data", alphadp_data, "Sigmav0_data", Sigmav0_data, "av0_data", av0_data, "bv0_data", bv0_data, "D0_data", D0_data, "al0_data", al0_data, "bl0_data", bl0_data, "ElambdaM_data", ElambdaM_data, "aM0_data", aM0_data, "bM0_data", bM0_data, "F", F, "Ex1", Ex1, "Sigmax1", Sigmax1, "H", H, "clutter_density", clutter_density, 'lambdaclutter', lambdaclutter,"radius", init_radius, "velo", init_velo, "ROI_x", ROI_x, "ROI_y", ROI_y, "clutter_gauss_approx_cov", clutter_gauss_approx_cov, "Essq_data", Essq_data, "Elsq_data", Elsq_data);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% other parameters for method and script
@@ -147,8 +150,6 @@ thresh_cluster = 100000*chi2inv(gate_parameter_cluster, 2);
 %measurement em cov compensation
 cov_comp_init = 0.04;
 cov_comp = 0.04;
-%cov_comp_init = 0.5;
-%cov_comp = 0.25;
 
 %birth and death stuff
 binoN = 1; % parameter for object birth, number of POs born per time step, cf. I_{birth} in manuscript
@@ -166,11 +167,6 @@ birth_heuristic_memory = 2; %heuristic parameter, new PO generated when unmatche
 death_heuristic_memory = 2; %heuristic parameter, PO track is ended after x consecutive missed detections
 
 fixed_birth_flag = 1;
-
-%parameters for EM-learning algorithm
-Cmax = 4;
-Cov_EM = diag(10^(6) * ones(1, 6));
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %object state estimation parameters
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -181,8 +177,8 @@ SigmaXinit = diag([900, 900, 16, 16]);
 %MCMC parameters
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 mult = 1;
-L = 50; % number of MCMC iterations, adjust for better results
-bis = 10; % number of burn in samples
+L = 100; % number of MCMC iterations, adjust for better results
+bis = 20; % number of burn in samples
 R = 10; % number of particles per target
 Rinit = 10; % number of particles per target during initialization
 fCi = round(1*L);%101;%9900; % fix C to final result after fCi iterations, set about 10% below L
@@ -210,32 +206,30 @@ while sim <= sims
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if generatedataflag
         if sim == 1 || ~only_measurements_flag
-            [data, hyperparams] = generatedata(hyperparams, script_params);
+            [data] = generatedata(hyperparams, script_params);
         else
-            [data, hyperparams] =generatemeasurements(data, hyperparams, script_params);
+            [data, hyperparams] = generatemeasurements(data, hyperparams, script_params);
         end
     elseif loaddata_flag && ~mod(sim, loadsi) || sim == 1
         file_inc = file_inc + 1;
-        load(strcat('data\', matfiles(file_inc).name), 'data', 'hyperparams');
+        load(strcat('data\', matfiles(file_inc).name), 'data');
     elseif loaddata_flag
-        [data, hyperparams] =generatemeasurements(data, hyperparams, script_params);
+        [data] =generatemeasurements(data, hyperparams, script_params);
     end
     hyperparams_noclustering = hyperparams;
     hyperparams_noclustering.alphadp = inf;
     hyperparams_fusion = hyperparams;
-    al0_fus = 70.*[1; 1]; bl0_fus = Elsq_data.*(al0_fus - 1); % object extent covariance matrix parameters
+    al0_fus = 70.*[1; 1]; bl0_fus = Elsq.*(al0_fus - 1); % object extent covariance matrix parameters
     hyperparams_fusion.al0 = al0_fus; hyperparams_fusion.bl0 = bl0_fus; %hyperparams_fusion.av0 = av0_data; hyperparams_fusion.bv0 = bv0_data;
 
     script_nc = script_params; %script_nc.cov_comp = 1;
     data.q = [squeeze(data.Sigmavstar(1,1,data.C)).' ; squeeze(data.Sigmavstar(3,3,data.C)).'];
-    Cmax_data(sim) = max(data.C);
-    %data.lambdaMstar
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% initialize tracking
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     object_class_est = struct('Dest', repmat(hyperparams.D0, 1, 1, binoN), 'Qest', repmat(hyperparams.Sigmav0, 1, 1, binoN), 'lambdaMest', hyperparams.ElambdaM*ones(binoN,1), 'Cest',(1:binoN).', 'existsteps', zeros(1, binoN), 'Msum', zeros(1, binoN), 'Zsqsum', zeros(2, binoN), 'Vsqsum', zeros(4, binoN));
     init_tracking = sequentialTracking(data, hyperparams, object_class_est, script_params_init, mcmc_params);
-    %[OSPA_init(sim), OSPA_init_pert(:, sim) ] = calculate_OSPA(data.X, init_tracking.X, data.Ts, data.Te, init_tracking.Ts, init_tracking.Te, p, cutoff, alpha);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% perform tracking
@@ -243,40 +237,36 @@ while sim <= sims
     Perfresults = tracking_w_knownclass(data, hyperparams, script_params, mcmc_params, init_tracking, sim);
     [DPresults, ~, ~] = joint_tracking_and_classlearning(data, hyperparams, script_params, mcmc_params, init_tracking, sim);
     [NCresults, ~, ~] = joint_tracking_and_classlearning(data, hyperparams_noclustering, script_nc, mcmc_params, init_tracking, sim);
-    FUSIONresults = tracking_w_DPbasedlearning(data, hyperparams_fusion, script_params, mcmc_params);
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% metrics and evaluation
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     %% Known parameters metrics
-    Cmax_Perf(sim) = max(Perfresults.object_class_est.Cest);
     [OSPA_Perf_nolabels(sim), OSPA_Perf_nolabels_pert(:, sim), ~, ~] = calculate_OSPA_notracklabels(data.X, Perfresults.X, p, cutoff, alpha);
     [OSPA_Perf_GWD_nolabels(sim), OSPA_Perf_GWD_nolabels_pert(:, sim), ~, ~, MSE_Perf_nolabels(:,sim), ~, ~]  = calculate_OSPA_notracklabels(data.X, Perfresults.X, p, cutoff_GWD, alpha, cutoff_mse, data.Dstar(:,:, data.C), Perfresults.D, data.q, Perfresults.q, data.lambdaMstar(data.C), Perfresults.lambdaM, data.C, Perfresults.object_class_est.Cest);
+    [OSPA_Perf(sim), ~, ~, ~] = calculate_OSPA(data.X, Perfresults.X, data.Ts, data.Te, Perfresults.Ts, Perfresults.Te, p, cutoff, alpha);
         
     %% DP clustering metrics
-    Cmax_DP(sim) = max(DPresults.object_class_est.Cest);
     [OSPA_DP_nolabels(sim), OSPA_DP_nolabels_pert(:, sim), ~, ~] = calculate_OSPA_notracklabels(data.X, DPresults.X, p, cutoff, alpha);
     [OSPA_DP_GWD_nolabels(sim), OSPA_DP_GWD_nolabels_pert(:, sim), ~, ~, MSE_DP_nolabels(:,sim), ~, ~]  = calculate_OSPA_notracklabels(data.X, DPresults.X, p, cutoff_GWD, alpha, cutoff_mse, data.Dstar(:,:, data.C), DPresults.D, data.q, DPresults.q, data.lambdaMstar(data.C), DPresults.lambdaM, data.C, DPresults.object_class_est.Cest);
+    [OSPA_DP(sim), ~, ~, ~] = calculate_OSPA(data.X, DPresults.X, data.Ts, data.Te, DPresults.Ts, DPresults.Te, p, cutoff, alpha);
     
     %% No clustering metrics
     [OSPA_NC_nolabels(sim), OSPA_NC_nolabels_pert(:, sim), ~, ~] = calculate_OSPA_notracklabels(data.X, NCresults.X, p, cutoff, alpha);
     [OSPA_NC_GWD_nolabels(sim), OSPA_NC_GWD_nolabels_pert(:, sim), ~, ~, MSE_NC_nolabels(:,sim), ~, ~]  = calculate_OSPA_notracklabels(data.X, NCresults.X, p, cutoff_GWD, alpha, cutoff_mse, data.Dstar(:,:, data.C), NCresults.D, data.q, NCresults.q, data.lambdaMstar(data.C), NCresults.lambdaM, data.C, NCresults.object_class_est.Cest);
-        
-    %% FUSION metrics
-    [OSPA_FUSION_nolabels(sim), OSPA_FUSION_nolabels_pert(:, sim), ~, ~] = calculate_OSPA_notracklabels(data.X, FUSIONresults.X, p, cutoff, alpha);
-    [~, OSPA_FUSION_GWD_nolabels_pert(:, sim), ~, ~, MSE_FUSION_nolabels(:,sim), MSE_FUSION_nolabels_pert(:,:,sim), matched_classifications_nolabels_FUSION(:,sim)]  = calculate_OSPA_notracklabels(data.X, FUSIONresults.X, p, cutoff_GWD, alpha, cutoff_mse, data.Dstar(:,:, data.C), FUSIONresults.D, data.q, FUSIONresults.q, data.lambdaMstar(data.C), repmat(hyperparams.ElambdaM, 1, FUSIONresults.maxNactive), data.C, FUSIONresults.object_class_est.Cest, 1);
-
-
+    [OSPA_NC(sim), ~, ~, ~] = calculate_OSPA(data.X, NCresults.X, data.Ts, data.Te, NCresults.Ts, NCresults.Te, p, cutoff, alpha);
+    
     %% Save data
-%     current_dir = pwd;
-%     filename = strcat(pwd, '/results/', 'results_sim', string(sim), '_', date, '.mat');
-%     save(filename, 'OSPA_Perf_GWD_nolabels_pert', 'OSPA_FUSION_GWD_nolabels_pert', 'OSPA_NC_GWD_nolabels_pert', 'OSPA_DP_GWD_nolabels_pert', 'maxT', 'data', 'hyperparams')
-
-
+    current_dir = pwd;
+    filename_results = strcat(pwd, '/results/', 'results', '.mat');
+    save(filename_results, 'OSPA_Perf_GWD_nolabels_pert', 'OSPA_Perf_nolabels', 'OSPA_Perf', 'OSPA_NC_GWD_nolabels_pert', 'OSPA_NC_nolabels', 'OSPA_NC', 'OSPA_DP_GWD_nolabels_pert', 'OSPA_DP_nolabels', 'OSPA_DP', 'maxT')
+  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% iterate sim
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     sim = sim + 1
 end
 
-plotOSPAGWD_pert    
+plotOSPAGWD_pert

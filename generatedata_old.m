@@ -186,8 +186,10 @@ end
 
 if script.clutterflag
     % generate clutter measurements
-    max_xy = [hyper.radius;hyper.radius];
-    min_xy = [-hyper.radius;-hyper.radius]; % min and max on both axes according to target measurements
+    max_xy = [max(max(max(Z(1,:,:,1:maxNactive)))); max(max(max(Z(2,:,:,1:maxNactive))))];
+    min_xy = [min(min(min(Z(1,:,:,1:maxNactive)))); min(min(min(Z(2,:,:,1:maxNactive))))]; % min and max on both axes according to target measurements
+%     max_xy = [hyper.radius;hyper.radius];
+%     min_xy = [-hyper.radius;-hyper.radius]; % min and max on both axes according to target measurements
     V = norm(max_xy - min_xy); % volume of area
     lambdaclutter = hyper.clutter_density*V; %expectation of number of false alarms
     %hyper.lambdaclutter = lambdaclutter;

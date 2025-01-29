@@ -25,12 +25,12 @@ while newcust_count < newcust_total
     Cnew(newcust_count) = find(mnrnd(1, [prob_existing_table_ell(1:l), prob_new_table]./(sum([prob_existing_table_ell(1:l), prob_new_table]))));
 
     % Generate extent matrices
-    lsqinv = gamrnd(hyper.al0, 1./hyper.bl0, 2, 1);
+    lsqinv = gamrnd(2, 1./(hyper.Elsq_data.*(2 - 1)), 2, 1);
     lsq = 1./lsqinv;
     Dnew(:,:, newcust_count) = diag(lsq);
 
     % Generate driving noise covariance matrices
-    ssqinv = gamrnd(hyper.av0, 1./hyper.bv0, 2, 1);
+    ssqinv = gamrnd(2, 1./(hyper.Essq_data.*(2 - 1)), 2, 1);
     ssq = 1./ssqinv;
     Sigmavnew(:, :, newcust_count) = diag(ssq([1, 1, 2, 2]));
 

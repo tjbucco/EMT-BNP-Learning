@@ -38,9 +38,8 @@ wasexpo = NaN(1, R);
 if M(1, 1)
     Sigmax1prime = blkdiag(eye(2)*max(diag(D))/M(1, 1), Sigmax1(3:4, 3:4));
     
-    %X(:, 1:(R - 1), 1) = mvnrnd([Znm(:, 1).', 0, 0], Sigmax1prime, R - 1).';
-    X(:, 1:(R - 1), 1) = mvnrnd_fast(repmat([Znm(:, 1).', 0, 0],R-1,1), diag(Sigmax1prime).').';
-
+    X(:, 1:(R - 1), 1) = mvnrnd([Znm(:, 1).', 0, 0], Sigmax1prime, R - 1).';
+    
     for r = 1:R
         Rkt = calcrotmat(X(:, r, 1));
         Ynksqsum = nansum((Rkt.'*(Z(:, :, 1) - X(1:2, r*ones(1, maxnm), 1))).^2, 2);
@@ -49,7 +48,7 @@ if M(1, 1)
     end
 else
     X(:, 1:(R - 1), 1) = mvnrnd([0, 0, 0, 0], Sigmax1, R - 1).';
-    
+
     wexpo = ones(1, R);
 end
 

@@ -1,4 +1,4 @@
-function probs = calc_indicator_probs(Q, D, lambda, Sigmax1, Zsqsum, no_of_targets, Ccs, Cwoi, hyper, T, no_of_measurements, Vsqsum, denom_expo_factorial, Xinit)
+function probs = calc_indicator_probs(Q, D, lambda, Sigmax1, Zsqsum, no_of_targets, Ccs, Cwoi, hyper, T, no_of_measurements, Vsqsum, denom_expo_factorial, Xinit, premeasurements, driving_noises, no_of_measurements_k)
 
 if hyper.alphadp == inf
     probs = zeros(1,max(Ccs) + 1);
@@ -21,44 +21,44 @@ ssqstarc = 1./ssqstarcinv;
 Q = cat(3,diag(ssqstarc([1, 1, 2, 2])), Q);
 % diag(Vsqsum/(T-1))
 % Q(end + 1) = diag(Vsqsum/(T-1));
+driving_noises_1 = reshape(driving_noises(1:2,2:end),1, []);
+driving_noises_2 = reshape(driving_noises(3:4,2:end),1, []);
+
 
 aMstarc = hyper.aM0 + no_of_measurements;
 bMstarc = hyper.bM0 + T + 1;
 lambda = [gamrnd(aMstarc, 1./bMstarc); lambda];
 
+[no_of_meas_uniq, ~, i_unq] = unique(no_of_measurements_k(1:end-1));
+
+initial_model = mvnpdfln(Xinit.', 0, diag(Sigmax1).');
 
 aexpo = NaN(1,max(Ccs) + 1);
-for c = 1:max(Ccs) + 1
-
-    measurement_model = 1/2*(1./transpose(diag(D(:,:,c)))*Zsqsum)  + lambda(c) - no_of_measurements*log(lambda(c)) + denom_expo_factorial;
-    initial_model = - 1/2*(1./transpose(diag(Sigmax1))*Xinit.^2);
-    motion_model = - 1/2 * 1./transpose(diag(Q(:,:,c))) * Vsqsum;
-    
+for c = 1:max(Ccs) + 1    
     if c == 1
-        alt = hyper.al0 + 1/2*no_of_measurements;
-        blt = hyper.bl0 + 1/2*Zsqsum;
-        extent_conditional = calc_inverse_gamma_log(diag(D(:,:,c)), alt, blt);
         
-        avt = hyper.av0 + T;
-        bvt = hyper.bv0 + 1/2*[Vsqsum_pos; Vsqsum_velo];
-        driving_conditional = calc_inverse_gamma_log([Q(1,1,c);Q(3,3,c)], avt, bvt);
+        evid_A_1 = mvtpdfln_fast(driving_noises_1, hyper.bv0(1)/hyper.av0(1) * eye(size(driving_noises_1,2)), 2*hyper.av0(1));
+        evid_A_2 = mvtpdfln_fast(driving_noises_2, hyper.bv0(2)/hyper.av0(2) * eye(size(driving_noises_2,2)), 2*hyper.av0(2));
+        evid_B_1 = mvtpdfln_fast(premeasurements(1,:), hyper.bl0(1)/hyper.al0(1) * eye(size(premeasurements,2)), 2*hyper.al0(1));
+        evid_B_2 = mvtpdfln_fast(premeasurements(2,:), hyper.bl0(2)/hyper.al0(2) * eye(size(premeasurements,2)), 2*hyper.al0(2));
+        evid_C_1 = negmnpdfln(no_of_measurements_k.', 1/(size(no_of_measurements_k,1) + hyper.bM0) * ones(1, size(no_of_measurements_k,1) + 1), hyper.aM0);
 
-        aMt = hyper.aM0 + no_of_measurements;
-        bMt = hyper.bM0 + T;
-        lambda_conditional = calc_gamma_log(lambda(c), aMt, bMt);
-        
-        conditional_probs = extent_conditional + driving_conditional + lambda_conditional;
-        
-        base_pdf = calc_inverse_gamma_log(diag(D(:,:,c)), hyper.al0, hyper.bl0) + calc_inverse_gamma_log([Q(1,1,c);Q(3,3,c)], hyper.av0, hyper.bv0) + calc_gamma_log(lambda(c), hyper.aM0, hyper.bM0);
-        
-        aexpo(1, 0 + 1) = log(hyper.alphadp/(hyper.alphadp + no_of_targets - 1)) + base_pdf - conditional_probs + initial_model + measurement_model + motion_model;
-        %aexpo(1, 0 + 1) = log(class_hyperparameters.alphadp/(class_hyperparameters.alphadp + K - 1)) + base_pdf - conditional_probs + initial_model + measurement_model + motion_model;
-        %aexpo(1, 0 + 1) = log(alphadp*(2*pi)^(2/3)*(hyper.bl0(1).^hyper.al0(1)*hyper.bl0(2).^hyper.al0(2)*bM0^aM0)/(gamma(hyper.al0(1))*gamma(hyper.al0(2))*gamma(aM0))) + aln(1)*log(aln(1)/bln(1)) + aln(2)*log(aln(2)/bln(2)) + aMn*log(aMn/bMn) - 1/2*log(aln(1)*aln(2)*aMn) - (aln(1) + aln(2) + aMn);
+        aexpo(1, 0 + 1) = log(hyper.alphadp/(hyper.alphadp + no_of_targets - 1)) + evid_A_1 +  evid_A_2 + evid_B_1 + evid_B_2 + evid_C_1 + initial_model;
     else
+        
+        motion_model_A1 = mvnpdfln(driving_noises_1, 0, Q(1,1,c)* ones(1,size(driving_noises_1,2)));
+        motion_model_A2 = mvnpdfln(driving_noises_2, 0, Q(3,3,c)* ones(1,size(driving_noises_2,2)));
+
+        measurement_model_B1 = mvnpdfln(premeasurements(1,:), 0, D(1,1,c)*ones(1, size(premeasurements,2)));
+        measurement_model_B2 = mvnpdfln(premeasurements(2,:), 0, D(2,2,c)*ones(1, size(premeasurements,2)));
+
+        poisspdf_uniq = poisspdfln(no_of_meas_uniq, lambda(c));
+        measurement_model_C1 = sum(poisspdf_uniq(i_unq));
+
+        motion_model = motion_model_A1 + motion_model_A2;
+        measurement_model = measurement_model_B1 + measurement_model_B2 + measurement_model_C1;
+
         aexpo(c) = log(sum(Cwoi == (c - 1))) - log(hyper.alphadp + no_of_targets - 1) + initial_model + measurement_model + motion_model;
-        %aexpo(c + 1) = log(sum(Cwon == c)) - log(class_hyperparameters.alphadp + no_of_targets - 1) + initial_model + measurement_model + motion_model;
-        %1/(class_hyperparameters.alphadp + maxN - 1)*(sum(Cwon == c))*(T products of measurement model)*(target state prior)*(T - 1 products of state transition model);
-        %aexpo(c + 1) = log(sum(Cwon == c)) + Msum(1, n)*log(lambdaMstarcs(1, c)) - (Te(n) - Ts(n) + 1)*lambdaMstarcs(1, c) - 1/2*Msum(1, n)*log(Dstarcs(1, 1, c)*Dstarcs(2, 2, c)) - 1/2*(Zsqsum(1)/Dstarcs(1, 1, c) + Zsqsum(2)/Dstarcs(2, 2, c));
     end
 end
 if max(aexpo) == Inf

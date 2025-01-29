@@ -14,6 +14,6 @@ function p = prob(point, mu, sigma, lambda)
 %}
 p = lambda;
 for ii = 1:length(point)
-    p = p * normpdf(point(ii,1), mu(ii,1), sigma(ii,ii));
+    p = p * exp(-0.5 * ((point(ii,1) - mu(ii,1))./sigma(ii,ii)).^2) ./ (sqrt(2*pi) .* sigma(ii,ii));
 end
 end

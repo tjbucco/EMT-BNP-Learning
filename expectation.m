@@ -16,7 +16,12 @@ p_cluster = NaN(1, number_of_clusters);
 for ii = 1: size(Data,2)
     x = Data(1:end - 1, ii);
     for k = 1:size(mu, 2)
-        p_cluster(1, k) = prob(x, mu(:, k), sigma(:,:,k), lambda(1,k));
+%         p_cluster(1, k) = prob(x, mu(:, k), sigma(:,:,k), lambda(1,k));
+        p = lambda(1,k);
+        for iii = 1:length(x)
+            p = p * exp(-0.5 * ((x(iii,1) - mu(iii,k))./sigma(iii,iii,k)).^2) ./ (sqrt(2*pi) .* sigma(iii,iii,k));
+        end
+        p_cluster(1, k) = p;
     end
     [~, Data(end, ii)] = max(p_cluster);
     %     if p_cluster1 > p_cluster2

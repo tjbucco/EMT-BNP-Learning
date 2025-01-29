@@ -6,22 +6,26 @@ Msum = zeros(1, init_tracking.maxNactive);
 denom_factorial = zeros(1, init_tracking.maxNactive);
 Zsqsum = zeros(2, init_tracking.maxNactive);
 Vsqsum = zeros(4, init_tracking.maxNactive);
+premeasurements = cell(1, init_tracking.maxNactive);
+driving_noise_est = cell(1, init_tracking.maxNactive);
 
 for i = 1:init_tracking.maxNactive
     denom_factorial_exp = 0;
     for t = init_tracking.Ts(i):init_tracking.Te(i)
         rot = calcrotmat(Xcs(:,t, i));
         premeasurements_i = rot.'* (init_tracking.Z(:, :, t, i) - Xcs(1:2, t, i));
+        premeasurements{i} = cat(2, premeasurements{i}, premeasurements_i(:, ~isnan(premeasurements_i(1, :))));
         existsteps(i) = existsteps(i) + 1;
         Msum(i) = Msum(i) + init_tracking.M(t,i);
         denom_factorial_exp = denom_factorial_exp + log(factorials(max(min(init_tracking.M(t,i), 150),1)));
         Zsqsum(:, i) = Zsqsum(:, i) + nansum(premeasurements_i.^2, 2);
         if t == init_tracking.Ts(i)
-            driving_noise_est = [0;0;0;0];
+            driving_noise_est_i = [0;0;0;0];
         else
-            driving_noise_est = Xcs(:,t,i) - hyper.F*Xcs(:,t-1,i);
+            driving_noise_est_i = Xcs(:,t,i) - hyper.F*Xcs(:,t-1,i);
         end
-        Vsqsum(:,i) = Vsqsum(:,i) + nansum(driving_noise_est.^2, 2);
+        driving_noise_est{i} = cat(2, driving_noise_est{i}, driving_noise_est_i);
+        Vsqsum(:,i) = Vsqsum(:,i) + nansum(driving_noise_est_i.^2, 2);
     end
     denom_factorial(i) = denom_factorial_exp;
 end
@@ -29,6 +33,10 @@ if init_tracking.maxNactive > 0
     object_class_est.existsteps = existsteps; object_class_est.Msum = Msum; object_class_est.Zsqsum = Zsqsum; object_class_est.Vsqsum = Vsqsum;
 else
     object_class_est = object_class_est_prev;
+    Ccs = C(:, ell);
+    Dstarcs = Dstar(:, :, :, ell);
+    Qstarcs = Qstar(:, :, :, ell);
+    lambdaMstarcs = lambdaMstar(:, ell);
     return
 end
 %Gibbs sampler algorithm - see bernds' thesis
@@ -95,7 +103,8 @@ else
         Dstarellminus1 = cat(3, Dstarellminus1, Dtent);
         lambdastarellminus1 = lambdaMstar(:, ell - 1);
         lambdastarellminus1 = cat(1, lambdastarellminus1, lambdatent);
-        a = calc_indicator_probs(Qstarellminus1, Dstarellminus1, lambdastarellminus1, hyper.Sigmax1, Zsqsum(:, i), init_tracking.maxNactive, C(:, ell - 1), Cwoi, hyper, existsteps(i), Msum(i), Vsqsum(:, i), denom_factorial(i), Xcs(:,init_tracking.Ts(i), i));
+        a = calc_indicator_probs(Qstarellminus1, Dstarellminus1, lambdastarellminus1, hyper.Sigmax1, Zsqsum(:, i), init_tracking.maxNactive, C(:, ell - 1), Cwoi, hyper, existsteps(i), Msum(i), Vsqsum(:, i), denom_factorial(i), Xcs(:,init_tracking.Ts(i), i), premeasurements{i}, driving_noise_est{i}, init_tracking.M(init_tracking.Ts(i):init_tracking.Te(i),i));
+%         a = calc_indicator_probs_old(Qstarellminus1, Dstarellminus1, lambdastarellminus1, hyper.Sigmax1, Zsqsum(:, i), init_tracking.maxNactive, C(:, ell - 1), Cwoi, hyper, existsteps(i), Msum(i), Vsqsum(:, i), denom_factorial(i), Xcs(:,init_tracking.Ts(i), i));
         C(i, ell) = find(mnrnd(1, a)) - 1;
 
         %if c_i^{n, k} is new class, sample D*tent and Q*tent from eq(5.113)

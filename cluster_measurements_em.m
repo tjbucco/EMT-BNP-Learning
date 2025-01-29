@@ -44,7 +44,7 @@ else
         likelihood = 0;
         for ii = 1:no_of_measurements
             for kk = 1:est_no_of_objects
-                likelihood = lambda_em(1, kk) * mvnpdf(measurements(:,ii), X_bic(:,kk), sigma_bic(:, :, kk)) + likelihood;
+                likelihood = lambda_em(1, kk) * mvnpdf_fast(measurements(:,ii), X_bic(:,kk), diag(sigma_bic(:, :, kk)).') + likelihood;
             end
             loglike = log(likelihood) + loglike;
         end

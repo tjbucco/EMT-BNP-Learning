@@ -1,8 +1,8 @@
-matfiles = dir("*.mat");
+matfiles = dir("old results\good results 5dB almost\*.mat");
 file_inc_prime = 0;
 for file = matfiles'
     file_inc_prime = file_inc_prime + 1
-    load(file.name);
+    load(strcat("old results\good results 5dB almost\", file.name));
     %parameters for OSPA metric
     p = 1; cutoff = 120; cutoff_GWD = 1000; cutoff_mse = cutoff*100.*[Elsq_data.^2; Essq_data.^2; ElambdaM_data]; alpha = 2; %OSPA metric parameters
 
