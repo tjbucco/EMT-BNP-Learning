@@ -4,6 +4,10 @@ if hyper.alphadp == inf
     probs = zeros(1,max(Ccs) + 1);
     probs(1) = 1;
 return
+elseif hyper.alphadp == -inf
+    probs = zeros(1,max(Ccs) + 1);
+    probs(2) = 1;
+    return
 end
 
 alstarc = hyper.al0 + 1/2*no_of_measurements*[1; 1];

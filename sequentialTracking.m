@@ -114,5 +114,9 @@ exists_and_detected_ind = exists_and_detected_ind > 0;
 
     Z = cat(4, Z(:,:,1:script_params.maxT,exists_and_detected_ind), Z(:,:,1:script_params.maxT,end));
     
-    results = struct('X', X, 'd', d, 'q', q, 'D', D, 'Z', Z, 'object_class_est', object_class_est, 'state_est', state_est, 'daoed_est', daoed_est, 'Ts', Ts, 'Te', Te, 'maxTactive', maxTactive, 'maxNactive', maxNactive, 'nactive', nactive, 'M', M);
+    if script_params.knownDA ~= true
+        results = struct('X', X, 'd', d, 'q', q, 'D', D, 'Z', Z, 'object_class_est', object_class_est, 'state_est', state_est, 'daoed_est', daoed_est, 'Ts', Ts, 'Te', Te, 'maxTactive', maxTactive, 'maxNactive', maxNactive, 'nactive', nactive, 'M', M);
+    else
+        results = struct('X', X, 'd', d, 'q', q, 'D', D, 'Z', data.Z, 'object_class_est', object_class_est, 'state_est', state_est, 'daoed_est', daoed_est, 'Ts', data.Ts, 'Te', data.Te, 'maxTactive', data.maxTactive, 'maxNactive', data.maxNactive, 'nactive', data.nactive, 'M', data.M);
+    end
 end

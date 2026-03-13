@@ -1,6 +1,7 @@
 function [object_class_est, C, Dstar, Qstar, lambdaMstar, Ccs, Dstarcs, Qstarcs, lambdaMstarcs] = match_objects_w_knownparams(init_tracking, data, Xcs, object_class_est_prev, hyper, factorials, mcmc, ell, C, Dstar, Qstar, lambdaMstar)
 
 assignments = associate_esttracks_w_truetracks_notmunkres(data.X, Xcs); %omega_tracks, column index corresponds to true track, row to estimated track
+Ccs = NaN(size(assignments,2), 1);
 for i = 1:size(assignments,2)
     iprime = assignments(i);
     Ccs(i) = data.C(iprime);

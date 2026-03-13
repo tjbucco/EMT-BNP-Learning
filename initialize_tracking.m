@@ -11,8 +11,11 @@ invDavg = Davg^-1;
 
 
 %em algorithm for computing initial DA, number of objects, and states
-[X_em_loc, ~, DA1] = initial_state_estimate_em(data.measurements_all{1}, hyper, script, script.use_binoN_init);
-% [X_em_loc, ~, DA1] = initial_em_known_no_objects(data.measurements_all{1}, hyper, script, script.binoN);
+if script.EG_analysis
+    [X_em_loc, ~, DA1] = initial_em_known_no_objects(data.measurements_all{1}, hyper, script, script.binoN);
+else
+    [X_em_loc, ~, DA1] = initial_state_estimate_em(data.measurements_all{1}, hyper, script, script.use_binoN_init);
+end
 
 %gating procedure to assign measurements to clutter
 [DA1(DA1 > 0)] = perform_init_gating(X_em_loc, DA1(DA1 > 0), data.measurements_all{1}(DA1 > 0), script.initial_thresh, invDavg);

@@ -17,6 +17,9 @@ while newcust_count < newcust_total
     if hyper.alphadp == inf
         prob_existing_table_ell(1:l) = 0; 
         prob_new_table = 1;
+    elseif hyper.alphadp == -inf
+        prob_existing_table_ell(1:l) = 1;
+        prob_new_table = 0;
     else
         prob_new_table = hyper.alphadp/(hyper.alphadp + total_customers);
     end

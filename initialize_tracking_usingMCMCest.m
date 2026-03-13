@@ -1,4 +1,4 @@
-function [daoed_est, object_class_est_update, state_est_update] = detect_objects_and_associate_data(object_class_est, state_est, daoed_est_prev, measurements, data, hyper, script, knownparams_flag, t)
+function [daoed_est, object_class_est_update, state_est_update] = initialize_tracking_usingMCMCest(object_class_est, state_est, daoed_est_prev, measurements, data, hyper, script, knownparams_flag, t)
 
 if nargin < 8
     knownparams_flag = 0;
@@ -38,11 +38,11 @@ if no_of_legacyobjects == 0
     Drot = [davg, 0; 0, davg];
     invDavg = Drot^-1;
 
-    [X_em_loc, ~, DA] = initial_state_estimate_em(measurements, hyper, script);
+    [X_em_loc, ~, DA] = initial_state_estimate_em(measurements, hyper, script, script.use_binoN_init);
     %[X_em_loc, ~, DA] = initial_em_known_no_objects(measurements, hyper, script, sum(data.nactive(:,t)));
 
     %gating procedure to assign measurements to clutter
-    [DA(DA > 0)] = perform_init_gating(X_em_loc, DA(DA > 0), measurements(:, DA > 0), script.initial_thresh, invDavg);
+    [DA(DA > 0)] = perform_init_gating(X_em_loc, DA(DA > 0), measurements(DA > 0), script.initial_thresh, invDavg);
     
     %calculate estimate of initial state
     no_of_objects_update = sum(unique(DA) > 0);
