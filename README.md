@@ -1,1 +1,1 @@
-A pdf of the supplementary material for the manuscript ``Extended Multiobject Tracking with Nonparametric Bayesian Learning of Object Classes and Model Parameters`` is available here and saved under ``suppl_mats_260313.pdf''.
+A pdf of the supplementary material for the manuscript ``Extended Multiobject Tracking with Nonparametric Bayesian Learning of Object Classes and Model Parameters`` is available here and saved under ``Supplementary_Material/suppl_mats_260313.pdf''.
